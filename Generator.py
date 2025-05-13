@@ -7,7 +7,8 @@ from datetime import datetime
 
 users = {
     "alice": "password123",
-    "bob": "mypassword"
+    "bob": "mypassword",
+    "jude": "jude123"
 }
 
 def open_invoice_window():
@@ -32,7 +33,7 @@ def open_invoice_window():
     tk.Label(header_frame, text="Welcome to the InvoRator", font=("Garamond", 14, "bold"), bg="lightblue").pack(side=tk.LEFT)
 
     # Time label in top right corner
-    time_label = tk.Label(header_frame, font=("Garamond", 12), bg="lightblue", anchor="e")
+    time_label = tk.Label(header_frame, font=("Garamond", 25, "bold"), bg="lightblue", anchor="e")
     time_label.pack(side=tk.RIGHT, padx=10)
 
     def update_time():
@@ -45,19 +46,19 @@ def open_invoice_window():
     form_frame = tk.Frame(invoice_window, bg="lightblue")
     form_frame.grid(row=1, column=0, pady=5, sticky="nsew")
 
-    tk.Label(form_frame, text="Your Name:", bg="lightblue").grid(row=0, column=0, sticky='w')
+    tk.Label(form_frame, text="Your Name:", bg="lightblue", font=("Arial", 12, "bold")).grid(row=0, column=0, sticky='w')
     customer_entry = tk.Entry(form_frame, width=40)
     customer_entry.grid(row=0, column=1)
 
-    tk.Label(form_frame, text="Bill To - Name:", bg="lightblue").grid(row=1, column=0, sticky='w')
+    tk.Label(form_frame, text="Bill To - Name:", bg="lightblue", font=("Arial", 12, "bold")).grid(row=1, column=0, sticky='w')
     client_name_entry = tk.Entry(form_frame, width=40)
     client_name_entry.grid(row=1, column=1)
 
-    tk.Label(form_frame, text="Bill To - Address:", bg="lightblue").grid(row=2, column=0, sticky='w')
+    tk.Label(form_frame, text="Bill To - Address:", bg="lightblue", font=("Arial", 12, "bold")).grid(row=2, column=0, sticky='w')
     client_address_entry = tk.Entry(form_frame, width=40)
     client_address_entry.grid(row=2, column=1)
 
-    tk.Label(form_frame, text="Bill To - Email:", bg="lightblue").grid(row=3, column=0, sticky='w')
+    tk.Label(form_frame, text="Bill To - Email:", bg="lightblue", font=("Arial", 12, "bold")).grid(row=3, column=0, sticky='w')
     client_email_entry = tk.Entry(form_frame, width=40)
     client_email_entry.grid(row=3, column=1)
 
@@ -343,4 +344,3 @@ tk.Button(root, text="Login", font=("Helvetica", 12), command=login).pack(pady=2
 tk.Button(root, text="Register", font=("Helvetica", 12), command=show_register_window).pack(pady=20)
 
 root.mainloop()
-
