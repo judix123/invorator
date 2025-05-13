@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from datetime import datetime
+import csv
 
 users = {
     "alice": "password123",
@@ -32,7 +33,6 @@ def open_invoice_window():
 
     tk.Label(header_frame, text="Welcome to the InvoRator", font=("Garamond", 14, "bold"), bg="lightblue").pack(side=tk.LEFT)
 
-    # Time label in top right corner
     time_label = tk.Label(header_frame, font=("Garamond", 25, "bold"), bg="lightblue", anchor="e")
     time_label.pack(side=tk.RIGHT, padx=10)
 
@@ -125,8 +125,7 @@ def open_invoice_window():
     def refresh_product_listbox():
         product_listbox.delete(0, tk.END)
         for i, (item, qty, price, total) in enumerate(products):
-            product_listbox.insert(tk.END,
-                                   f"{i + 1}. {item:<35} Qty:{qty:<4} Price: ₱{price:<7.2f} \nTotal: ₱{total:<7.2f}")
+            product_listbox.insert(tk.END, f"{i+1}. {item:<35} Qty:{qty:<4} Price: ₱{price:<7.2f} \nTotal: ₱{total:<7.2f}")
         total_var.set(f"₱{sum(p[3] for p in products):.2f}")
 
     def add_appliance_to_invoice(name, price):
@@ -163,10 +162,8 @@ def open_invoice_window():
         if not selected:
             messagebox.showwarning("Select Item", "Please select an item to update.")
             return
-
         index = selected[0]
         item, qty, price, _ = products[index]
-
         update_window = tk.Toplevel(invoice_window)
         update_window.title("Update Item")
         update_window.geometry("300x200")
@@ -279,21 +276,48 @@ def open_invoice_window():
         c.save()
         messagebox.showinfo("Success", f"Invoice saved as {filename}")
 
+    def generate_csv():
+        customer = customer_entry.get().strip()
+        client_name = client_name_entry.get().strip()
+        client_address = client_address_entry.get().strip()
+        client_email = client_email_entry.get().strip()
+
+        if not customer or not client_name or not client_address or not client_email:
+            messagebox.showerror("Error", "All fields must be filled out.")
+            return
+
+        if not products:
+            messagebox.showerror("Error", "Please add at least one product.")
+            return
+
+        filename = f"Invoice_{client_name.replace(' ', '_')}.csv"
+        with open(filename, mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Customer", customer])
+            writer.writerow(["Client Name", client_name])
+            writer.writerow(["Address", client_address])
+            writer.writerow(["Email", client_email])
+            writer.writerow([])
+            writer.writerow(["Item", "Quantity", "Unit Price", "Total"])
+            for item, qty, price, total in products:
+                writer.writerow([item, qty, price, total])
+            writer.writerow([])
+            writer.writerow(["Total", "", "", total_var.get()])
+        messagebox.showinfo("Success", f"CSV file saved as {filename}")
+
     tk.Button(invoice_window, text="Generate PDF", command=generate_pdf, bg="green", font=("Helvetica", 12)).grid(row=6, column=0, pady=10)
+    tk.Button(invoice_window, text="Generate CSV", command=generate_csv, bg="blue", fg="white", font=("Helvetica", 12)).grid(row=7, column=0, pady=5)
 
 def register_user():
     def save_user():
         username = reg_username_entry.get()
         password = reg_password_entry.get()
-
         if username in users:
             messagebox.showerror("Error", "Username already exists.")
             return
-
         if not username or not password:
             messagebox.showerror("Error", "Username and password cannot be empty.")
             return
-
         users[username] = password
         messagebox.showinfo("Success", f"User '{username}' registered successfully!")
         reg_window.destroy()
@@ -320,7 +344,6 @@ def show_register_window():
 def login():
     username = username_entry.get()
     password = password_entry.get()
-
     if username in users and users[username] == password:
         root.withdraw()
         open_invoice_window()
