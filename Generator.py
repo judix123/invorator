@@ -15,7 +15,7 @@ users = {
 def open_invoice_window():
     invoice_window = tk.Toplevel()
     invoice_window.title("Invoice Generator")
-    invoice_window.geometry("1000x700")
+    invoice_window.geometry("1000x750")
     invoice_window.configure(bg="lightblue")
 
     header_frame = tk.Frame(invoice_window, bg="lightblue")
@@ -46,7 +46,7 @@ def open_invoice_window():
     form_frame = tk.Frame(invoice_window, bg="lightblue")
     form_frame.grid(row=1, column=0, pady=5, sticky="nsew")
 
-    tk.Label(form_frame, text="Your Name:", bg="lightblue", font=("Arial", 12, "bold")).grid(row=0, column=0, sticky='w')
+    tk.Label(form_frame, text="Cashier:", bg="lightblue", font=("Arial", 12, "bold")).grid(row=0, column=0, sticky='w')
     customer_entry = tk.Entry(form_frame, width=40)
     customer_entry.grid(row=0, column=1)
 
@@ -90,43 +90,60 @@ def open_invoice_window():
 
     scrollable_frame.bind("<Configure>", on_frame_configure)
     canvas_widget.bind("<Configure>", on_canvas_configure)
-
-    def on_mousewheel(event):
-        canvas_widget.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-    canvas_widget.bind_all("<MouseWheel>", on_mousewheel)
+    canvas_widget.bind_all("<MouseWheel>", lambda event: canvas_widget.yview_scroll(int(-1 * (event.delta / 120)), "units"))
 
     appliances = [
-        ("Refrigerator (LG 6.0 cu.ft)", 13498),
-        ("Washing Machine (Samsung 7kg)", 10995),
-        ("Electric Fan (Asahi 16\")", 1599),
-        ("Air Conditioner (Panasonic 1.0HP)", 18495),
-        ("Rice Cooker (Hanabishi 1.0L)", 999),
-        ("Microwave Oven (Sharp 20L)", 3999),
-        ("Induction Cooker (Imarflex IDX-2000S)", 2195),
-        ("Blender (Oster 10-speed)", 2495),
-        ("Electric Kettle (Kyowa 1.7L)", 849),
-        ("Flat Iron (Philips GC122)", 799),
-        ("Television (TCL 32” Android)", 8995),
-        ("Water Dispenser (Fujidenzo Table Top)", 3395),
-        ("Chest Freezer (Haier 5.3 cu.ft)", 14495),
-        ("Vacuum Cleaner (Electrolux Cyclonic)", 5995),
-        ("Coffee Maker (Black+Decker 12-cup)", 2499),
-        ("Air Fryer (Xiaomi 3.5L)", 3295),
-        ("Toaster Oven (Hanabishi 23L)", 2295),
-        ("Water Heater (Panasonic)", 6495),
-        ("Electric Grill (Dowell Smokeless)", 1799),
-        ("Stand Mixer (KitchenAid 4.5qt)", 21999)
+        ("Refrigerator (LG 6.0 cu.ft)", 13498.99),
+        ("Washing Machine (Samsung 7kg)", 10995.57),
+        ("Electric Fan (Asahi 16\")", 1599.89),
+        ("Air Conditioner (Panasonic 1.0HP)", 18495.49),
+        ("Rice Cooker (Hanabishi 1.0L)", 999.19),
+        ("Microwave Oven (Sharp 20L)", 3999.39),
+        ("Induction Cooker (Imarflex IDX-2000S)", 2195.29),
+        ("Blender (Oster 10-speed)", 2495.49),
+        ("Electric Kettle (Kyowa 1.7L)", 849.69),
+        ("Flat Iron (Philips GC122)", 799.59),
+        ("Television (TCL 32” Android)", 8995.79),
+        ("Water Dispenser (Fujidenzo Table Top)", 3395.89),
+        ("Chest Freezer (Haier 5.3 cu.ft)", 14495.09),
+        ("Vacuum Cleaner (Electrolux Cyclonic)", 5995.99),
+        ("Coffee Maker (Black+Decker 12-cup)", 2499.29),
+        ("Air Fryer (Xiaomi 3.5L)", 3295.39),
+        ("Toaster Oven (Hanabishi 23L)", 2295.69),
+        ("Water Heater (Panasonic)", 6495.19),
+        ("Electric Grill (Dowell Smokeless)", 1799.39),
+        ("Stand Mixer (KitchenAid 4.5qt)", 21999.79),
+        ("Electric Fan", 1999.89)
     ]
 
     products = []
     total_var = tk.StringVar(value="₱0.00")
+    cash_var = tk.StringVar()
+    change_var = tk.StringVar(value="₱0.00")
+    num_items_var = tk.StringVar(value="0")
 
     def refresh_product_listbox():
         product_listbox.delete(0, tk.END)
+        total_price = 0
+        total_quantity = 0
         for i, (item, qty, price, total) in enumerate(products):
             product_listbox.insert(tk.END, f"{i+1}. {item:<35} Qty:{qty:<4} Price: ₱{price:<7.2f} \nTotal: ₱{total:<7.2f}")
-        total_var.set(f"₱{sum(p[3] for p in products):.2f}")
+            total_price += total
+            total_quantity += qty
+        total_var.set(f"₱{total_price:.2f}")
+        num_items_var.set(str(total_quantity))
+        update_change()
+
+    def update_change(*args):
+        try:
+            cash = float(cash_var.get())
+            total = float(total_var.get().replace("₱", "").replace(",", ""))
+            change = cash - total
+            change_var.set("₱{:.2f}".format(change) if change >= 0 else "Insufficient")
+        except ValueError:
+            change_var.set("Invalid")
+
+    cash_var.trace_add("write", update_change)
 
     def add_appliance_to_invoice(name, price):
         for index, (item, qty, existing_price, total) in enumerate(products):
@@ -203,10 +220,43 @@ def open_invoice_window():
     tk.Button(btn_frame, text="Update Product", command=update_selected, bg="orange").pack(side=tk.LEFT, padx=10)
     tk.Button(btn_frame, text="Delete Product", command=delete_selected, bg="tomato").pack(side=tk.LEFT, padx=10)
 
-    total_frame = tk.Frame(invoice_window, bg="lightblue")
-    total_frame.grid(row=5, column=0, pady=5)
-    tk.Label(total_frame, text="Total: ", bg="lightblue", font=("Helvetica", 12, "bold")).pack(side=tk.LEFT)
-    tk.Label(total_frame, textvariable=total_var, bg="lightblue", font=("Helvetica", 12, "bold")).pack(side=tk.LEFT)
+    summary_frame = tk.Frame(invoice_window, bg="lightblue")
+    summary_frame.grid(row=5, column=0, pady=5)
+
+    tk.Label(summary_frame, text="Total: ", bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=0, column=0)
+    tk.Label(summary_frame, textvariable=total_var, bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=0, column=1)
+
+    tk.Label(summary_frame, text="Cash: ", bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=1, column=0)
+    tk.Entry(summary_frame, textvariable=cash_var, width=20).grid(row=1, column=1)
+
+    tk.Label(summary_frame, text="Change: ", bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=2, column=0)
+    tk.Label(summary_frame, textvariable=change_var, bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=2, column=1)
+
+    tk.Label(summary_frame, text="Number of Items: ", bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=3, column=0)
+    tk.Label(summary_frame, textvariable=num_items_var, bg="lightblue", font=("Helvetica", 12, "bold")).grid(row=3, column=1)
+
+    def generate_csv():
+        customer = customer_entry.get().strip()
+        client_name = client_name_entry.get().strip()
+        client_address = client_address_entry.get().strip()
+        client_email = client_email_entry.get().strip()
+
+        filename = f"Invoice_{client_name.replace(' ', '_')}.csv"
+        with open(filename, mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Customer", customer])
+            writer.writerow(["Client Name", client_name])
+            writer.writerow(["Address", client_address])
+            writer.writerow(["Email", client_email])
+            writer.writerow([])
+            writer.writerow(["Item", "Quantity", "Unit Price", "Total"])
+            for item, qty, price, total in products:
+                writer.writerow([item, qty, f"{price:.2f}", f"{total:.2f}"])
+            writer.writerow([])
+            writer.writerow(["Total", "", "", total_var.get()])
+            writer.writerow(["Cash", "", "", f"₱{cash_var.get()}"])
+            writer.writerow(["Change", "", "", change_var.get()])
+            writer.writerow(["Number of Items", "", "", num_items_var.get()])
 
     def generate_pdf():
         customer = customer_entry.get().strip()
@@ -235,9 +285,7 @@ def open_invoice_window():
 
         c.setFont("Helvetica", 10)
         y = height - 120
-        c.drawString(50, y, f"Customer: {customer}")
-        y -= 15
-        c.drawString(50, y, f"Bill To: {client_name}")
+        c.drawString(50, y, f"Sold To: {client_name}")
         y -= 15
         c.drawString(50, y, f"Address: {client_address}")
         y -= 15
@@ -263,50 +311,28 @@ def open_invoice_window():
 
         c.line(50, y, 550, y)
         y -= 20
+        c.setFont("Helvetica-Bold", 20)
+        c.drawString(50, y, f"TOTAL:       {total_var.get()}")
+        y -= 15
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(50, y, f"TOTAL: {total_var.get()}")
+        c.drawString(50, y, f"CASH: ₱{cash_var.get()}")
+        y -= 15
+        c.drawString(50, y, f"CHANGE: {change_var.get()}")
+        y -= 15
+        c.drawString(50, y, f"NUMBER OF ITEMS: {num_items_var.get()}")
+        y -= 15
+        c.drawString(50, y, f"Cashier: {customer}")
 
-        y -= 30
-        c.setFont("Helvetica", 10)
-        c.drawString(50, y, "-" * 100)
-        y -= 10
-        c.setFont("Helvetica", 12)
-        c.drawString(50, y, "THANK YOU FOR USING InvoRator")
+        c.line(50, y, 550, y)
+        y -= 20
 
+        c.drawString(200, y, "THIS IS YOUR SALES INVOICE")
         c.save()
-        messagebox.showinfo("Success", f"Invoice saved as {filename}")
 
-    def generate_csv():
-        customer = customer_entry.get().strip()
-        client_name = client_name_entry.get().strip()
-        client_address = client_address_entry.get().strip()
-        client_email = client_email_entry.get().strip()
+        generate_csv()
+        messagebox.showinfo("Success", f"Invoice saved as {filename} and CSV also generated.")
 
-        if not customer or not client_name or not client_address or not client_email:
-            messagebox.showerror("Error", "All fields must be filled out.")
-            return
-
-        if not products:
-            messagebox.showerror("Error", "Please add at least one product.")
-            return
-
-        filename = f"Invoice_{client_name.replace(' ', '_')}.csv"
-        with open(filename, mode='w', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            writer.writerow(["Customer", customer])
-            writer.writerow(["Client Name", client_name])
-            writer.writerow(["Address", client_address])
-            writer.writerow(["Email", client_email])
-            writer.writerow([])
-            writer.writerow(["Item", "Quantity", "Unit Price", "Total"])
-            for item, qty, price, total in products:
-                writer.writerow([item, qty, price, total])
-            writer.writerow([])
-            writer.writerow(["Total", "", "", total_var.get()])
-        messagebox.showinfo("Success", f"CSV file saved as {filename}")
-
-    tk.Button(invoice_window, text="Generate PDF", command=generate_pdf, bg="green", font=("Helvetica", 12)).grid(row=6, column=0, pady=10)
-    tk.Button(invoice_window, text="Generate CSV", command=generate_csv, bg="blue", fg="white", font=("Helvetica", 12)).grid(row=7, column=0, pady=5)
+    tk.Button(invoice_window, text="Enter/Pay", command=generate_pdf, bg="green", font=("Helvetica", 12)).grid(row=6, column=0, pady=10)
 
 def register_user():
     def save_user():
@@ -351,19 +377,59 @@ def login():
         messagebox.showerror("Login Error", "Invalid username or password")
 
 root = tk.Tk()
-root.title("Login Window")
-root.geometry("400x300")
-root.configure(bg="lightblue")
+root.title("InvoRator Login")
+root.geometry("450x400")
+root.resizable(False, False)
 
-tk.Label(root, text="Username:", font=("Helvetica", 12), bg="lightblue").pack(pady=10)
-username_entry = tk.Entry(root, font=("Helvetica", 12))
-username_entry.pack(pady=5)
+# Load background image
+try:
+    bg_img = Image.open("back.png").resize((450, 400))
+    bg_photo = ImageTk.PhotoImage(bg_img)
+    bg_label = tk.Label(root, image=bg_photo, borderwidth=0)
+    bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+except Exception as e:
+    print(f"Background load failed: {e}")
+    root.configure(bg="white")  # Fallback
 
-tk.Label(root, text="Password:", font=("Helvetica", 12), bg="lightblue").pack(pady=10)
-password_entry = tk.Entry(root, font=("Helvetica", 12), show="*")
-password_entry.pack(pady=5)
+# Load and display logo
+try:
+    logo_img = Image.open("InvoRator.png").resize((60, 60))
+    logo = ImageTk.PhotoImage(logo_img)
+    logo_label = tk.Label(root, image=logo, borderwidth=0, highlightthickness=0)
+    logo_label.image = logo
+    logo_label.place(x=195, y=20)
+except Exception as e:
+    print(f"Logo load failed: {e}")
 
-tk.Button(root, text="Login", font=("Helvetica", 12), command=login).pack(pady=20)
-tk.Button(root, text="Register", font=("Helvetica", 12), command=show_register_window).pack(pady=20)
+# Branding Header (no bg)
+header_label = tk.Label(root, text="Welcome to InvoRator", font=("Garamond", 20, "bold"),
+                        fg="navy", borderwidth=0, highlightthickness=0)
+header_label.place(x=90, y=90)
+
+# Form Frame (keeps white for readability)
+form_frame = tk.Frame(root, bg="white", bd=2, relief="ridge")
+form_frame.place(x=60, y=140, width=330, height=100)
+
+tk.Label(form_frame, text="Username:", font=("Helvetica", 12), bg="white").grid(row=0, column=0, padx=10, pady=10, sticky="e")
+username_entry = tk.Entry(form_frame, font=("Helvetica", 12), width=20)
+username_entry.grid(row=0, column=1, padx=10, pady=10)
+
+tk.Label(form_frame, text="Password:", font=("Helvetica", 12), bg="white").grid(row=1, column=0, padx=10, pady=10, sticky="e")
+password_entry = tk.Entry(form_frame, font=("Helvetica", 12), show="*", width=20)
+password_entry.grid(row=1, column=1, padx=10, pady=10)
+
+# Buttons (no bg on frame)
+button_frame = tk.Frame(root, borderwidth=0, highlightthickness=0)
+button_frame.place(x=75, y=250)
+
+login_btn = tk.Button(button_frame, text="Login", font=("Helvetica", 12, "bold"),
+                      bg="green", fg="white", width=12, command=login)
+login_btn.grid(row=0, column=0, padx=10)
+
+register_btn = tk.Button(button_frame, text="Register", font=("Helvetica", 12, "bold"),
+                         bg="dodgerblue", fg="white", width=12, command=show_register_window)
+register_btn.grid(row=0, column=1, padx=10)
+
+username_entry.focus()
 
 root.mainloop()
